@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Guerra Espacial - Nave vs ETs</title>
+  <title>Guerra Espacial - Desafio Supremo</title>
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      user-select: none; /* Impede seleção acidental de texto no celular */
+      user-select: none;
       -webkit-user-select: none;
     }
 
@@ -17,48 +17,87 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #050510;
+      background-color: #03030a;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    /* Container Principal */
     #game-container {
       position: relative;
       width: 100vw;
-      height: 90vh;
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
     }
 
-    /* Tela de Desenho do Jogo */
     canvas {
-      background: linear-gradient(to bottom, #020208, #0b0b1a);
+      background: linear-gradient(to bottom, #010105, #080816);
       display: block;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 25px rgba(0, 255, 255, 0.25);
     }
 
-    /* Overlay de Pontuação e Interface */
+    /* Top UI */
     #ui-layer {
       position: absolute;
       top: 15px;
       left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
       color: #fff;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: bold;
       text-shadow: 0 0 5px #00ffff;
       pointer-events: none;
       z-index: 10;
     }
 
-    /* Tela de Game Over / Início */
+    /* Barra de Vida do Chefe */
+    #boss-ui {
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      max-width: 400px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      z-index: 10;
+    }
+
+    #boss-ui span {
+      color: #ff0055;
+      font-weight: bold;
+      text-shadow: 0 0 5px #ff0055;
+      margin-bottom: 3px;
+    }
+
+    #boss-bar-bg {
+      width: 100%;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid #ff0055;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    #boss-bar-fill {
+      width: 100%;
+      height: 100%;
+      background: #ff0055;
+      box-shadow: 0 0 10px #ff0055;
+      transition: width 0.1s linear;
+    }
+
+    /* Tela de Início / Game Over */
     #overlay-screen {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(5, 5, 16, 0.85);
+      background: rgba(3, 3, 10, 0.88);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -68,24 +107,26 @@
     }
 
     #overlay-screen h1 {
-      font-size: 36px;
+      font-size: 34px;
       margin-bottom: 10px;
       color: #00ffff;
-      text-shadow: 0 0 10px #00ffff;
+      text-shadow: 0 0 12px #00ffff;
       text-align: center;
     }
 
     #overlay-screen p {
-      font-size: 16px;
+      font-size: 15px;
       margin-bottom: 25px;
       color: #ccc;
       text-align: center;
       padding: 0 20px;
+      max-width: 500px;
+      line-height: 1.4;
     }
 
     .btn {
-      padding: 12px 30px;
-      font-size: 20px;
+      padding: 12px 32px;
+      font-size: 18px;
       font-weight: bold;
       background: #00ffff;
       color: #000;
@@ -93,20 +134,20 @@
       border-radius: 25px;
       cursor: pointer;
       box-shadow: 0 0 15px #00ffff;
-      transition: transform 0.2s, background 0.2s;
+      transition: transform 0.2s;
     }
 
     .btn:active {
       transform: scale(0.95);
     }
 
-    /* Controles Mobile (Botões Touch) */
+    /* Controles Mobile */
     #mobile-controls {
       position: absolute;
       bottom: 20px;
       left: 0;
       width: 100%;
-      display: none; /* Exibido apenas em telas menores via JS */
+      display: none;
       justify-content: space-between;
       padding: 0 20px;
       z-index: 10;
@@ -122,7 +163,7 @@
     .touch-btn {
       width: 50px;
       height: 50px;
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.12);
       border: 1px solid rgba(0, 255, 255, 0.4);
       border-radius: 10px;
       color: #fff;
@@ -156,23 +197,30 @@
 <body>
 
   <div id="game-container">
-    <!-- UI do Jogo -->
+    <!-- UI -->
     <div id="ui-layer">
-      <div>Pontuação: <span id="score">0</span></div>
+      <div>Pontos: <span id="score">0</span></div>
+      <div>Onda: <span id="wave">1</span></div>
       <div>Vidas: <span id="lives">3</span></div>
     </div>
 
-    <!-- Canvas do Jogo -->
+    <!-- Interface do Chefe -->
+    <div id="boss-ui">
+      <span>CHEFE ET DETECTADO</span>
+      <div id="boss-bar-bg"><div id="boss-bar-fill"></div></div>
+    </div>
+
+    <!-- Tela do Canvas -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Overlay de Início e Game Over -->
+    <!-- Overlay -->
     <div id="overlay-screen">
-      <h1 id="screen-title">GUERRA ESPACIAL</h1>
-      <p id="screen-desc">Use as setas/WASD ou os botões na tela para mover e Espaço para atirar.</p>
+      <h1 id="screen-title">DESAFIO ESPACIAL</h1>
+      <p id="screen-desc">Destrua asteroides, naves alienígenas e o PODEROSO CHEFE ET!<br>Colete escudos, tiros duplos e vidas extras!</p>
       <button class="btn" id="start-btn">JOGAR</button>
     </div>
 
-    <!-- Controles de Toque para Celular -->
+    <!-- Controles Touch -->
     <div id="mobile-controls">
       <div class="dpad">
         <div></div>
@@ -188,34 +236,32 @@
 
   <script>
     // ==========================================
-    // 1. CONFIGURAÇÃO INICIAL E ADAPTAÇÃO
+    // 1. CONFIGURAÇÕES E CANVAS
     // ==========================================
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
     const scoreEl = document.getElementById('score');
+    const waveEl = document.getElementById('wave');
     const livesEl = document.getElementById('lives');
     const overlay = document.getElementById('overlay-screen');
     const screenTitle = document.getElementById('screen-title');
     const startBtn = document.getElementById('start-btn');
     const mobileControls = document.getElementById('mobile-controls');
+    const bossUi = document.getElementById('boss-ui');
+    const bossBarFill = document.getElementById('boss-bar-fill');
 
-    // Estado do jogo
     let gameRunning = false;
     let score = 0;
+    let wave = 1;
     let lives = 3;
     let animationFrameId;
 
-    // Redimensionamento Dinâmico (Responsivo)
     function resizeCanvas() {
       const maxWidth = 800;
       const maxHeight = 600;
-      const windowWidth = window.innerWidth;
-      const windowHeight = window.innerHeight;
-
-      // Mantém a proporção da tela
-      let width = windowWidth;
-      let height = windowHeight;
+      let width = window.innerWidth;
+      let height = window.innerHeight;
 
       if (width > maxWidth) width = maxWidth;
       if (height > maxHeight) height = maxHeight;
@@ -223,8 +269,7 @@
       canvas.width = width;
       canvas.height = height;
 
-      // Exibe controles na tela caso seja dispositivo móvel/tela pequena
-      if (windowWidth <= 768 || 'ontouchstart' in window) {
+      if (window.innerWidth <= 768 || 'ontouchstart' in window) {
         mobileControls.style.display = 'flex';
       } else {
         mobileControls.style.display = 'none';
@@ -235,17 +280,10 @@
     resizeCanvas();
 
     // ==========================================
-    // 2. CONTROLES (TECLADO E TOUCH)
+    // 2. CONTROLES DE ENTRADA
     // ==========================================
-    const keys = {
-      left: false,
-      right: false,
-      up: false,
-      down: false,
-      shoot: false
-    };
+    const keys = { left: false, right: false, up: false, down: false, shoot: false };
 
-    // Teclado
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
       if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
@@ -262,9 +300,8 @@
       if (e.key === ' ' || e.key === 'Spacebar') keys.shoot = false;
     });
 
-    // Função auxiliar para vincular botões de toque
-    function bindTouch(elementId, keyName) {
-      const btn = document.getElementById(elementId);
+    function bindTouch(id, keyName) {
+      const btn = document.getElementById(id);
       btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
       btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; });
       btn.addEventListener('mousedown', () => { keys[keyName] = true; });
@@ -278,25 +315,38 @@
     bindTouch('btn-fire', 'shoot');
 
     // ==========================================
-    // 3. OBJETOS DO JOGO (ENTIDADES)
+    // 3. ENTIDADES DO JOGO
     // ==========================================
 
-    // Nave do Jogador
+    // Jogador
     const player = {
       x: canvas.width / 2,
       y: canvas.height - 60,
-      width: 40,
-      height: 40,
+      width: 36,
+      height: 36,
       speed: 5,
       lastShoot: 0,
-      shootDelay: 200, // milissegundos entre tiros
+      shootDelay: 180,
+      shieldTime: 0,      // Tempo de escudo
+      doubleShootTime: 0, // Tempo de tiro duplo
 
       draw() {
         ctx.save();
         ctx.translate(this.x, this.y);
 
-        // Corpo da Nave
-        ctx.fillStyle = '#00ffff';
+        // Desenhar Escudo
+        if (this.shieldTime > 0) {
+          ctx.beginPath();
+          ctx.arc(0, 0, 28, 0, Math.PI * 2);
+          ctx.strokeStyle = '#00ffff';
+          ctx.lineWidth = 3;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#00ffff';
+          ctx.stroke();
+        }
+
+        // Cor do Corpo
+        ctx.fillStyle = '#00ffcc';
         ctx.beginPath();
         ctx.moveTo(0, -this.height / 2);
         ctx.lineTo(this.width / 2, this.height / 2);
@@ -306,15 +356,15 @@
 
         // Asas
         ctx.fillStyle = '#0088ff';
-        ctx.fillRect(-this.width / 2 - 5, 5, 10, 15);
-        ctx.fillRect(this.width / 2 - 5, 5, 10, 15);
+        ctx.fillRect(-this.width / 2 - 4, 5, 8, 12);
+        ctx.fillRect(this.width / 2 - 4, 5, 8, 12);
 
-        // Fogo da Propulsão
+        // Motor
         ctx.fillStyle = '#ff5500';
         ctx.beginPath();
-        ctx.moveTo(-5, this.height / 2);
-        ctx.lineTo(5, this.height / 2);
-        ctx.lineTo(0, this.height / 2 + 10 + Math.random() * 5);
+        ctx.moveTo(-4, this.height / 2);
+        ctx.lineTo(4, this.height / 2);
+        ctx.lineTo(0, this.height / 2 + 8 + Math.random() * 6);
         ctx.closePath();
         ctx.fill();
 
@@ -327,60 +377,98 @@
         if (keys.up && this.y - this.height / 2 > 0) this.y -= this.speed;
         if (keys.down && this.y + this.height / 2 < canvas.height) this.y += this.speed;
 
-        // Disparo contínuo com intervalo
+        if (this.shieldTime > 0) this.shieldTime--;
+        if (this.doubleShootTime > 0) this.doubleShootTime--;
+
+        // Atirar
         if (keys.shoot && Date.now() - this.lastShoot > this.shootDelay) {
-          bullets.push(new Bullet(this.x, this.y - this.height / 2));
+          if (this.doubleShootTime > 0) {
+            bullets.push(new Bullet(this.x - 10, this.y - 10, true));
+            bullets.push(new Bullet(this.x + 10, this.y - 10, true));
+          } else {
+            bullets.push(new Bullet(this.x, this.y - this.height / 2, true));
+          }
           this.lastShoot = Date.now();
         }
       }
     };
 
-    // Classe de Tiros
+    // Classe do Tiro (Jogador e Chefe)
     class Bullet {
-      constructor(x, y) {
+      constructor(x, y, isPlayer = true, vx = 0, vy = -8) {
         this.x = x;
         this.y = y;
-        this.radius = 4;
-        this.speed = 8;
+        this.radius = isPlayer ? 4 : 5;
+        this.isPlayer = isPlayer;
+        this.vx = vx;
+        this.vy = vy;
       }
 
       draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffff00';
+        ctx.fillStyle = this.isPlayer ? '#ffff00' : '#ff0055';
         ctx.shadowBlur = 8;
-        ctx.shadowColor = '#ffff00';
+        ctx.shadowColor = this.isPlayer ? '#ffff00' : '#ff0055';
         ctx.fill();
-        ctx.shadowBlur = 0; // Reseta sombra
+        ctx.shadowBlur = 0;
       }
 
       update() {
-        this.y -= this.speed;
+        this.x += this.vx;
+        this.y += this.vy;
       }
     }
 
-    // Classe de Asteroides
+    // Classe de Partículas (Explosões)
+    class Particle {
+      constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.radius = Math.random() * 3 + 1;
+        this.vx = (Math.random() - 0.5) * 6;
+        this.vy = (Math.random() - 0.5) * 6;
+        this.alpha = 1;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= 0.03;
+      }
+    }
+
+    // Classe Asteroide
     class Asteroid {
       constructor() {
-        this.radius = Math.random() * 15 + 15; // Tamanho entre 15 e 30
+        this.radius = Math.random() * 14 + 14;
         this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;
         this.y = -this.radius;
-        this.speed = Math.random() * 2 + 1.5;
+        this.speed = Math.random() * 1.5 + 1 + (wave * 0.3);
         this.angle = 0;
-        this.rotationSpeed = (Math.random() - 0.5) * 0.05;
+        this.rotation = (Math.random() - 0.5) * 0.04;
       }
 
       draw() {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
-
         ctx.strokeStyle = '#aaaaaa';
         ctx.fillStyle = '#444455';
         ctx.lineWidth = 2;
 
         ctx.beginPath();
-        // Desenha uma forma irregular simulação de asteroide
         const points = 7;
         for (let i = 0; i < points; i++) {
           const rad = (Math.PI * 2 / points) * i;
@@ -393,65 +481,151 @@
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
-
         ctx.restore();
       }
 
       update() {
         this.y += this.speed;
-        this.angle += this.rotationSpeed;
+        this.angle += this.rotation;
       }
     }
 
-    // Classe de Nave ET (Inimigo)
+    // Classe Nave ET Comum
     class AlienShip {
       constructor() {
-        this.width = 35;
-        this.height = 20;
+        this.width = 32;
+        this.height = 18;
         this.x = Math.random() * (canvas.width - this.width);
         this.y = -this.height;
-        this.speed = Math.random() * 2 + 2;
-        this.dx = Math.sin(Math.random() * Math.PI) * 2; // Movimento em ziguezague
+        this.speed = Math.random() * 1.5 + 1.8 + (wave * 0.2);
+        this.dx = Math.sin(Math.random() * Math.PI) * 2;
       }
 
       draw() {
         ctx.save();
         ctx.translate(this.x, this.y);
-
-        // Cúpula do ET
         ctx.fillStyle = '#00ff66';
         ctx.beginPath();
-        ctx.arc(0, -2, 10, Math.PI, 0);
+        ctx.arc(0, -2, 8, Math.PI, 0);
         ctx.fill();
 
-        // Disco Voador
         ctx.fillStyle = '#ff0055';
         ctx.beginPath();
-        ctx.ellipse(0, 3, this.width / 2, 8, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 3, this.width / 2, 7, 0, 0, Math.PI * 2);
         ctx.fill();
-
-        // Luzes piscantes
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-10, 3, 3, 3);
-        ctx.fillRect(0, 5, 3, 3);
-        ctx.fillRect(10, 3, 3, 3);
-
         ctx.restore();
       }
 
       update() {
         this.y += this.speed;
         this.x += this.dx;
-
-        // Rebater nas paredes laterais
         if (this.x - this.width / 2 < 0 || this.x + this.width / 2 > canvas.width) {
           this.dx *= -1;
         }
       }
     }
 
-    // Fundo Estrelado Animado
-    const stars = Array.from({ length: 50 }, () => ({
+    // O PODEROSO CHEFE ET
+    class Boss {
+      constructor() {
+        this.width = 120;
+        this.height = 50;
+        this.x = canvas.width / 2;
+        this.y = -this.height;
+        this.targetY = 80;
+        this.maxHealth = 40 + (wave * 20);
+        this.health = this.maxHealth;
+        this.dx = 3;
+        this.lastShoot = 0;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+
+        // Cúpula do Chefe
+        ctx.fillStyle = '#00ffff';
+        ctx.beginPath();
+        ctx.arc(0, -10, 25, Math.PI, 0);
+        ctx.fill();
+
+        // Corpo do Chefe
+        ctx.fillStyle = '#8800ff';
+        ctx.beginPath();
+        ctx.ellipse(0, 5, this.width / 2, 20, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Núcleo Luminoso
+        ctx.fillStyle = '#ff0055';
+        ctx.beginPath();
+        ctx.arc(0, 8, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      update() {
+        // Entrada na tela
+        if (this.y < this.targetY) {
+          this.y += 2;
+        } else {
+          // Movimento de patrulha lateral
+          this.x += this.dx;
+          if (this.x - this.width / 2 < 10 || this.x + this.width / 2 > canvas.width - 10) {
+            this.dx *= -1;
+          }
+
+          // Atirar Lasers em Padrão
+          if (Date.now() - this.lastShoot > 1200) {
+            bullets.push(new Bullet(this.x - 30, this.y + 20, false, 0, 5));
+            bullets.push(new Bullet(this.x, this.y + 20, false, 0, 6));
+            bullets.push(new Bullet(this.x + 30, this.y + 20, false, 0, 5));
+            this.lastShoot = Date.now();
+          }
+        }
+      }
+    }
+
+    // Classe Power-Up (Itens Especiais)
+    class PowerUp {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 12;
+        this.speed = 2;
+        // Tipos: 'shield', 'double', 'life'
+        const types = ['shield', 'double', 'life'];
+        this.type = types[Math.floor(Math.random() * types.length)];
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+
+        let color = '#00ffff';
+        let text = 'S';
+        if (this.type === 'double') { color = '#ffff00'; text = 'D'; }
+        if (this.type === 'life') { color = '#ff0055'; text = '+'; }
+
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, 0, 1);
+        ctx.restore();
+      }
+
+      update() {
+        this.y += this.speed;
+      }
+    }
+
+    // Estrelas de Fundo
+    const stars = Array.from({ length: 60 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
       size: Math.random() * 2,
@@ -470,112 +644,209 @@
       });
     }
 
-    // Lista de entidades ativas
+    // Listas globais
     let bullets = [];
     let enemies = [];
+    let particles = [];
+    let powerUps = [];
+    let boss = null;
     let spawnTimer = 0;
 
+    function createExplosion(x, y, color, count = 15) {
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle(x, y, color));
+      }
+    }
+
     // ==========================================
-    // 4. LÓGICA PRINCIPAL E COLISÕES
+    // 4. COLISÕES E REGRA DE JOGO
     // ==========================================
 
     function checkCollisions() {
-      // 1. Colisão: Tiro acertando Inimigo/Asteroide
+      // 1. Tiros do Jogador vs Inimigos/Chefe
       bullets.forEach((bullet, bIndex) => {
-        enemies.forEach((enemy, eIndex) => {
-          const radiusSum = enemy.radius || (enemy.width / 2);
-          const dist = Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y);
+        if (!bullet.isPlayer) return;
 
-          if (dist < bullet.radius + radiusSum) {
-            // Destrói tiro e inimigo
+        // Contra Inimigos Comuns
+        enemies.forEach((enemy, eIndex) => {
+          const r = enemy.radius || (enemy.width / 2);
+          if (Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y) < bullet.radius + r) {
+            createExplosion(enemy.x, enemy.y, enemy instanceof AlienShip ? '#ff0055' : '#aaaaaa');
+
+            // Chance de dropar Power-Up (15%)
+            if (Math.random() < 0.15) {
+              powerUps.push(new PowerUp(enemy.x, enemy.y));
+            }
+
             bullets.splice(bIndex, 1);
             enemies.splice(eIndex, 1);
-            
-            // Incrementa pontuação conforme o tipo de inimigo
+
             score += (enemy instanceof AlienShip) ? 20 : 10;
             scoreEl.textContent = score;
+
+            // Avançar onda a cada 100 pontos
+            if (score >= wave * 100) {
+              wave++;
+              waveEl.textContent = wave;
+            }
+
+            // Spawnar Chefe a cada 200 pontos
+            if (score % 200 === 0 && !boss) {
+              boss = new Boss();
+              bossUi.style.display = 'flex';
+            }
           }
         });
+
+        // Contra o Chefe
+        if (boss && Math.hypot(bullet.x - boss.x, bullet.y - boss.y) < bullet.radius + (boss.width / 2)) {
+          createExplosion(bullet.x, bullet.y, '#00ffff', 5);
+          bullets.splice(bIndex, 1);
+          boss.health--;
+
+          // Atualizar Barra
+          const pct = Math.max(0, (boss.health / boss.maxHealth) * 100);
+          bossBarFill.style.width = pct + '%';
+
+          if (boss.health <= 0) {
+            createExplosion(boss.x, boss.y, '#ff0055', 50);
+            createExplosion(boss.x, boss.y, '#00ffff', 50);
+            boss = null;
+            bossUi.style.display = 'none';
+            score += 150;
+            scoreEl.textContent = score;
+            powerUps.push(new PowerUp(canvas.width / 2, 100));
+          }
+        }
       });
 
-      // 2. Colisão: Jogador acertando Inimigo/Asteroide
-      enemies.forEach((enemy, eIndex) => {
-        const radiusSum = enemy.radius || (enemy.width / 2);
-        const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+      // 2. Tiros do Chefe vs Jogador
+      bullets.forEach((bullet, bIndex) => {
+        if (bullet.isPlayer) return;
 
-        if (dist < (player.width / 3) + radiusSum) {
-          enemies.splice(eIndex, 1);
-          lives--;
-          livesEl.textContent = lives;
-
-          if (lives <= 0) {
-            gameOver();
+        if (Math.hypot(bullet.x - player.x, bullet.y - player.y) < bullet.radius + (player.width / 3)) {
+          bullets.splice(bIndex, 1);
+          if (player.shieldTime <= 0) {
+            hitPlayer();
           }
+        }
+      });
+
+      // 3. Inimigos / Chefe vs Jogador
+      enemies.forEach((enemy, eIndex) => {
+        const r = enemy.radius || (enemy.width / 2);
+        if (Math.hypot(player.x - enemy.x, player.y - enemy.y) < (player.width / 3) + r) {
+          createExplosion(enemy.x, enemy.y, '#ff5500');
+          enemies.splice(eIndex, 1);
+          if (player.shieldTime <= 0) {
+            hitPlayer();
+          }
+        }
+      });
+
+      // 4. Power-Ups vs Jogador
+      powerUps.forEach((p, pIndex) => {
+        if (Math.hypot(player.x - p.x, player.y - p.y) < (player.width / 2) + p.radius) {
+          if (p.type === 'shield') player.shieldTime = 300; // 5 segundos
+          if (p.type === 'double') player.doubleShootTime = 400; // ~6.5 segundos
+          if (p.type === 'life') { lives++; livesEl.textContent = lives; }
+
+          powerUps.splice(pIndex, 1);
         }
       });
     }
 
-    // Loop do Jogo (Game Loop)
+    function hitPlayer() {
+      lives--;
+      livesEl.textContent = lives;
+      createExplosion(player.x, player.y, '#00ffcc', 20);
+
+      if (lives <= 0) {
+        gameOver();
+      }
+    }
+
+    // ==========================================
+    // 5. LOOP DO JOGO (GAME LOOP)
+    // ==========================================
+
     function gameLoop() {
       if (!gameRunning) return;
 
-      // Limpar tela
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Desenhar Fundo
       drawStars();
 
-      // Atualizar e Desenhar Jogador
+      // Atualizar/Desenhar Jogador
       player.update();
       player.draw();
 
-      // Gerar Inimigos Periodicamente
-      spawnTimer++;
-      if (spawnTimer % 40 === 0) {
-        if (Math.random() > 0.4) {
-          enemies.push(new Asteroid());
-        } else {
-          enemies.push(new AlienShip());
+      // Gerar Inimigos Comuns (Se o Chefe não estiver presente)
+      if (!boss) {
+        spawnTimer++;
+        if (spawnTimer % Math.max(15, 45 - wave * 3) === 0) {
+          if (Math.random() > 0.35) enemies.push(new Asteroid());
+          else enemies.push(new AlienShip());
         }
+      } else {
+        boss.update();
+        boss.draw();
       }
 
-      // Atualizar e Desenhar Tiros
-      bullets.forEach((bullet, index) => {
-        bullet.update();
-        bullet.draw();
-        // Remover tiros fora da tela
-        if (bullet.y < 0) bullets.splice(index, 1);
+      // Atualizar Tiros
+      bullets.forEach((b, index) => {
+        b.update();
+        b.draw();
+        if (b.y < -10 || b.y > canvas.height + 10) bullets.splice(index, 1);
       });
 
-      // Atualizar e Desenhar Inimigos
-      enemies.forEach((enemy, index) => {
-        enemy.update();
-        enemy.draw();
-        // Remover inimigos fora da tela
-        if (enemy.y > canvas.height + 50) enemies.splice(index, 1);
+      // Atualizar Inimigos
+      enemies.forEach((e, index) => {
+        e.update();
+        e.draw();
+        if (e.y > canvas.height + 50) enemies.splice(index, 1);
       });
 
-      // Checar Colisões
+      // Atualizar Power-Ups
+      powerUps.forEach((p, index) => {
+        p.update();
+        p.draw();
+        if (p.y > canvas.height + 20) powerUps.splice(index, 1);
+      });
+
+      // Atualizar Partículas
+      particles.forEach((pt, index) => {
+        pt.update();
+        pt.draw();
+        if (pt.alpha <= 0) particles.splice(index, 1);
+      });
+
       checkCollisions();
-
-      // Próximo Frame
       animationFrameId = requestAnimationFrame(gameLoop);
     }
 
     // ==========================================
-    // 5. GERENCIAMENTO DE ESTADO DO JOGO
+    // 6. INÍCIO E GAME OVER
     // ==========================================
 
     function startGame() {
       score = 0;
+      wave = 1;
       lives = 3;
       bullets = [];
       enemies = [];
-      spawnTimer = 0;
+      particles = [];
+      powerUps = [];
+      boss = null;
+
       scoreEl.textContent = score;
+      waveEl.textContent = wave;
       livesEl.textContent = lives;
+      bossUi.style.display = 'none';
+
       player.x = canvas.width / 2;
       player.y = canvas.height - 60;
+      player.shieldTime = 0;
+      player.doubleShootTime = 0;
 
       gameRunning = true;
       overlay.style.display = 'none';
@@ -586,8 +857,8 @@
       gameRunning = false;
       cancelAnimationFrame(animationFrameId);
       screenTitle.textContent = "GAME OVER";
-      document.getElementById('screen-desc').textContent = `Sua pontuação final foi: ${score}`;
-      startBtn.textContent = "JOGAR NOVAMENTE";
+      document.getElementById('screen-desc').innerHTML = `Pontuação Final: <b>${score}</b><br>Você chegou até a Onda: <b>${wave}</b>`;
+      startBtn.textContent = "TENTAR NOVAMENTE";
       overlay.style.display = 'flex';
     }
 
